@@ -1,3 +1,8 @@
+# Compiled artifacts ship via releases, not the repository
+plugins/
+*.smx
+compiled/
+
 # IDE files
 .idea/
 .vscode/

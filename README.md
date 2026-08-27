@@ -31,19 +31,23 @@ Normal chat is never touched: players opt in per message via `/crosschat`, so re
 ## Installation
 
 1. Install the REST in Pawn extension (see Requirements).
-2. Download and extract the attached archive.
+2. Download and extract the archive attached to a [release](https://github.com/Baimiao2534/nmrih-crosschat/releases).
 3. Drag and drop the folders from the archive directly into your server's `nmrih/addons/sourcemod/` directory.
 4. Restart the map or type `sm plugins load nmrih-crosschat` in the console.
 5. The plugin will automatically generate its default configuration file on first run.
 
 Deploy the web relay on any PHP 8.5+ host (see the [webrelay repository](https://github.com/Baimiao2534/nmrih-crosschat-webrelay) for instructions), then point `sm_crosschat_url` at it.
 
+## Building from Source
+
+The repository contains source code only; compiled binaries are distributed via [releases](https://github.com/Baimiao2534/nmrih-crosschat/releases). To build the plugin yourself, compile `scripting/nmrih-crosschat.sp` with the SourceMod compiler (`spcomp`). The required includes are bundled under `scripting/include/`.
+
 ## Directory Structure
 
 ```
 addons/sourcemod/
 ├── plugins/
-│   └── nmrih-crosschat.smx
+│   └── nmrih-crosschat.smx        (from the release archive)
 ├── scripting/
 │   ├── nmrih-crosschat.sp
 │   └── include/
