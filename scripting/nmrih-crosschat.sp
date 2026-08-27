@@ -126,8 +126,10 @@ public void OnPluginStart()
  */
 void MigrateConfig()
 {
+	// AutoExecConfig writes to <game>/cfg/sourcemod/, which sits two levels
+	// above the SourceMod root; traverse back via ../..
 	char path[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, path, sizeof(path), "cfg/sourcemod/plugin.crosschat.cfg");
+	BuildPath(Path_SM, path, sizeof(path), "../../cfg/sourcemod/plugin.crosschat.cfg");
 
 	if (!FileExists(path))
 	{
@@ -137,21 +139,45 @@ void MigrateConfig()
 	// Read all lines once; stale lines are filtered out below
 	ArrayList lines = new ArrayList(ByteCountToCells(256));
 	ArrayList known = new ArrayList(ByteCountToCells(64));
+	ArrayList pendingComments = new ArrayList(ByteCountToCells(256));
 
 	File file = OpenFile(path, "r");
 	if (file == null)
 	{
 		delete lines;
 		delete known;
+		delete pendingComments;
 		return;
 	}
 
-	char line[256], name[64];
+	char line[256], name[64], cbuf[256];
 	bool removedStale = false;
 	while (file.ReadLine(line, sizeof(line)))
 	{
 		// Strip the trailing newline; WriteLine re-adds it uniformly
 		TrimString(line);
+
+		// Buffer comment lines so they can be dropped together with a
+		// stale cvar entry that they document
+		int cs;
+		while (line[cs] == ' ' || line[cs] == '\t') cs++;
+		if (line[cs] == '/' && line[cs + 1] == '/')
+		{
+			pendingComments.PushString(line);
+			continue;
+		}
+		if (line[cs] == '\0')
+		{
+			// Blank separator: keep in place, flush buffered comments first
+			for (int j = 0; j < pendingComments.Length; j++)
+			{
+				pendingComments.GetString(j, cbuf, sizeof(cbuf));
+				lines.PushString(cbuf);
+			}
+			pendingComments.Clear();
+			lines.PushString("");
+			continue;
+		}
 
 		// Detect the cvar name at the start of a non-comment line
 		int start = 0;
@@ -168,10 +194,12 @@ void MigrateConfig()
 
 				// sm_crosschat_serverid is FCVAR_DONTRECORD by design: the
 				// identity comes from the -crosschat_sid startup parameter,
-				// never from the shared config file. Strip stale entries.
+				// never from the shared config file. Strip stale entries
+				// together with their comment block.
 				if (StrEqual(name, "sm_crosschat_serverid"))
 				{
 					removedStale = true;
+					pendingComments.Clear();
 					continue;
 				}
 
@@ -179,9 +207,22 @@ void MigrateConfig()
 			}
 		}
 
+		for (int j = 0; j < pendingComments.Length; j++)
+		{
+			pendingComments.GetString(j, cbuf, sizeof(cbuf));
+			lines.PushString(cbuf);
+		}
+		pendingComments.Clear();
 		lines.PushString(line);
 	}
 	delete file;
+
+	// Trailing comments with no cvar after them are kept
+	for (int j = 0; j < pendingComments.Length; j++)
+	{
+		pendingComments.GetString(j, cbuf, sizeof(cbuf));
+		lines.PushString(cbuf);
+	}
 
 	// Append convars introduced in later versions, each with a version banner
 	static const char convarNames[][] = {
