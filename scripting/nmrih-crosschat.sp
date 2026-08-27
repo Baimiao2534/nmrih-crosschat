@@ -13,7 +13,7 @@
 #include <sourcecomms>
 #define REQUIRE_PLUGIN
 
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.0.1"
 #define PLUGIN_DESCRIPTION "Cross-server chat via command with per-player cooldown"
 
 #define MAX_MSG_BUFFER 512
