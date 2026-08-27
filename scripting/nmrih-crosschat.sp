@@ -121,8 +121,8 @@ public void OnPluginStart()
 }
 
 /**
- * Appends newly introduced convars to an existing plugin.crosschat.cfg so
- * upgraded servers pick up new settings without manual edits.
+ * Keeps an existing plugin.crosschat.cfg in sync across upgrades:
+ * appends newly introduced convars and strips obsolete entries.
  */
 void MigrateConfig()
 {
@@ -134,48 +134,67 @@ void MigrateConfig()
 		return;  // First install: AutoExecConfig writes the complete file
 	}
 
-	File file = OpenFile(path, "r+");
+	// Read all lines once; stale lines are filtered out below
+	ArrayList lines = new ArrayList(ByteCountToCells(256));
+	ArrayList known = new ArrayList(ByteCountToCells(64));
+
+	File file = OpenFile(path, "r");
 	if (file == null)
 	{
+		delete lines;
+		delete known;
 		return;
 	}
 
-	// Collect every cvar name already present in the file
-	ArrayList known = new ArrayList(ByteCountToCells(64));
 	char line[256], name[64];
+	bool removedStale = false;
 	while (file.ReadLine(line, sizeof(line)))
 	{
-		// Lines look like: sm_crosschat_cooldown "30"  // comment
-		int start;
-		if (line[0] == '/' && line[1] == '/')
-		{
-			continue;
-		}
-		start = 0;
-		while (line[start] == ' ' || line[start] == '\t') start++;
-		if (line[start] != 's') continue;
+		// Strip the trailing newline; WriteLine re-adds it uniformly
+		TrimString(line);
 
-		int i;
-		for (i = start; i < sizeof(line) && line[i] != ' ' && line[i] != '\t' && line[i] != '\r' && line[i] != '\n' && line[i] != '\0'; i++) {}
-		int len = i - start;
-		if (len <= 0 || len >= sizeof(name)) continue;
-		strcopy(name, len + 1, line[start]);
-		known.PushString(name);
+		// Detect the cvar name at the start of a non-comment line
+		int start = 0;
+		while (line[start] == ' ' || line[start] == '\t') start++;
+
+		if (line[start] == 's')
+		{
+			int i;
+			for (i = start; i < sizeof(line) && line[i] != ' ' && line[i] != '\t' && line[i] != '\r' && line[i] != '\n' && line[i] != '\0'; i++) {}
+			int len = i - start;
+			if (len > 0 && len < sizeof(name))
+			{
+				strcopy(name, len + 1, line[start]);
+
+				// sm_crosschat_serverid is FCVAR_DONTRECORD by design: the
+				// identity comes from the -crosschat_sid startup parameter,
+				// never from the shared config file. Strip stale entries.
+				if (StrEqual(name, "sm_crosschat_serverid"))
+				{
+					removedStale = true;
+					continue;
+				}
+
+				known.PushString(name);
+			}
+		}
+
+		lines.PushString(line);
 	}
+	delete file;
 
 	// Append convars introduced in later versions, each with a version banner
-	bool wroteBanner = false;
-	char defVal[192];
-	ConVar cvar;
 	static const char convarNames[][] = {
-		"sm_crosschat_enabled", "sm_crosschat_serverid", "sm_crosschat_url",
+		"sm_crosschat_enabled", "sm_crosschat_url",
 		"sm_crosschat_token", "sm_crosschat_cooldown", "sm_crosschat_adminflag",
 		"sm_crosschat_fetchinterval", "sm_crosschat_maxlen", "sm_crosschat_prefix",
 		"sm_crosschat_console_enabled", "sm_crosschat_console_cooldown",
 		"sm_crosschat_console_name", "sm_crosschat_require_auth",
 	};
 
-	file.Seek(0, SEEK_END);
+	bool added = false;
+	char defVal[192], buf[256];
+	ConVar cvar;
 	for (int i = 0; i < sizeof(convarNames); i++)
 	{
 		bool found = false;
@@ -189,35 +208,55 @@ void MigrateConfig()
 			}
 		}
 
-		if (!found)
+		if (found)
 		{
-			cvar = FindConVar(convarNames[i]);
-			if (cvar == null)
-			{
-				continue;
-			}
+			continue;
+		}
 
-			if (!wroteBanner)
-			{
-				file.WriteLine("");
-				file.WriteLine("// ---- Added by upgrade to %s ----", PLUGIN_VERSION);
-				wroteBanner = true;
-			}
+		cvar = FindConVar(convarNames[i]);
+		if (cvar == null)
+		{
+			continue;
+		}
 
-			cvar.GetDefault(defVal, sizeof(defVal));
-			if (defVal[0] == '\0')
+		if (!added)
+		{
+			FormatEx(buf, sizeof(buf), "// ---- Added by upgrade to %s ----", PLUGIN_VERSION);
+			lines.PushString("");
+			lines.PushString(buf);
+			added = true;
+		}
+
+		cvar.GetDefault(defVal, sizeof(defVal));
+		if (defVal[0] == '\0')
+		{
+			FormatEx(buf, sizeof(buf), "%s \"\"", convarNames[i]);
+		}
+		else
+		{
+			FormatEx(buf, sizeof(buf), "%s \"%s\"", convarNames[i], defVal);
+		}
+		lines.PushString(buf);
+	}
+
+	// Rewrite only when the file actually changed
+	if (removedStale || added)
+	{
+		file = OpenFile(path, "w");
+		if (file != null)
+		{
+			for (int i = 0; i < lines.Length; i++)
 			{
-				file.WriteLine("%s \"\"", convarNames[i]);
+				lines.GetString(i, line, sizeof(line));
+				file.WriteLine("%s", line);
 			}
-			else
-			{
-				file.WriteLine("%s \"%s\"", convarNames[i], defVal);
-			}
+			delete file;
+			PrintToServer("[CrossChat] Configuration file migrated (obsolete entries removed, new entries appended)");
 		}
 	}
 
+	delete lines;
 	delete known;
-	delete file;
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int errMax)
