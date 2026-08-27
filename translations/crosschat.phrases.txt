@@ -59,10 +59,7 @@
 		"#format"	"{1:s}"
 		"en"		"[{green}{1}{default}] Message could not be delivered, please try again later"
 	}
-
-	"Sent"
-	{
-		"#format"	"{1:s}"
+"
 		"en"		"[{green}{1}{default}] Message sent to all servers"
 	}
 

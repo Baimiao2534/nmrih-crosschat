@@ -553,6 +553,11 @@ void SendPlayerMessage(int client, const char[] message)
 		gF_NextUse[client] = GetGameTime() + float(cooldown);
 	}
 
+	// Echo to the local server immediately: the relay filters own-server
+	// messages by design, so players here would otherwise never see them.
+	// Same format as remote servers receive.
+	BroadcastIncoming(sid, name, msgBuf);
+
 	// Log the outgoing message like a regular say line; delivery failures
 	// are logged separately in the response callback
 	LogToGame("[CrossChat] [%s] %s: %s", sid, name, msgBuf);
@@ -579,6 +584,8 @@ public void SendCallback(HTTPResponse response, any value, const char[] error)
 	char prefix[64];
 	cvPrefix.GetString(prefix, sizeof(prefix));
 
+	// The message was already echoed to everyone locally on send; only
+	// report failures back to the sender, success speaks for itself
 	if (error[0] != '\0')
 	{
 		PrintToServer("[CrossChat] Player message failed: %s", error);
@@ -588,10 +595,6 @@ public void SendCallback(HTTPResponse response, any value, const char[] error)
 	{
 		PrintToServer("[CrossChat] Player message failed: HTTP status %d", response.Status);
 		CPrintToChat(client, "%t", "Send Failed", prefix);
-	}
-	else
-	{
-		CPrintToChat(client, "%t", "Sent", prefix);
 	}
 }
 
@@ -665,6 +668,9 @@ Action ConsoleSend(int args)
 	{
 		gF_ConsoleNextUse = GetGameTime() + float(cooldown);
 	}
+
+	// Echo to the local server immediately, same as the player branch
+	BroadcastIncoming(sid, name, message);
 
 	// Log the outgoing console message like a regular say line
 	LogToGame("[CrossChat] [%s] %s: %s", sid, name, message);

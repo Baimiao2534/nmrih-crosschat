@@ -59,10 +59,7 @@
 		"#format"	"{1:s}"
 		"zho"		"[{green}{1}{default}] 訊息傳送失敗，請稍後再試"
 	}
-
-	"Sent"
-	{
-		"#format"	"{1:s}"
+"
 		"zho"		"[{green}{1}{default}] 訊息已傳送到所有伺服器"
 	}
 
