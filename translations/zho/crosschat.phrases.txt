@@ -1,0 +1,165 @@
+"Phrases"
+{
+	"Incoming Message"
+	{
+		"#format"	"{1:s},{2:s},{3:s},{4:s}"
+		"zho"		"[{green}{1}{default}] {default}[{lightgreen}{2}{default}] {3}: {4}"
+	}
+
+	"Usage"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 用法：{green}/crosschat{default} <訊息> 傳送跨伺服器訊息"
+	}
+
+	"Ready To Send"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 你現在可以傳送跨伺服器訊息"
+	}
+
+	"Cooldown Remaining"
+	{
+		"#format"	"{1:s},{2:d}"
+		"zho"		"[{green}{1}{default}] 請等待 {red}{2}{default} 秒後再傳送"
+	}
+
+	"Disabled"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 跨伺服器聊天目前已關閉"
+	}
+
+	"Not Configured"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 本伺服器未設定跨伺服器聊天"
+	}
+
+	"Gagged"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 你已被禁言，無法使用跨伺服器聊天"
+	}
+
+	"No Steam Auth"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 需要 Steam 認證後才能使用跨伺服器聊天"
+	}
+
+	"Auth Pending"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] Steam 驗證進行中，你的訊息將稍後自動傳送"
+	}
+
+	"Send Failed"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 訊息傳送失敗，請稍後再試"
+	}
+
+	"Sent"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 訊息已傳送到所有伺服器"
+	}
+
+
+	"Exempt Usage"
+	{
+		"zho"		"用法：sm_crosschat_exempt <玩家>"
+	}
+
+	"Exempt Enabled"
+	{
+		"#format"	"{1:s}"
+		"zho"		"已為 {1} 開啟冷卻豁免"
+	}
+
+	"Exempt Disabled"
+	{
+		"#format"	"{1:s}"
+		"zho"		"已關閉 {1} 的冷卻豁免"
+	}
+
+	"Exempt Enabled Self"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 管理員為你開啟了冷卻豁免"
+	}
+
+	"Exempt Disabled Self"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 管理員關閉了你的冷卻豁免"
+	}
+
+	"Cd Usage"
+	{
+		"zho"		"用法：sm_crosschat_cd <玩家> <秒數|-1>"
+	}
+
+	"Cd Set"
+	{
+		"#format"	"{1:s},{2:d}"
+		"zho"		"{1} 的冷卻時間已設定為 {2} 秒"
+	}
+
+	"Cd Reset Global"
+	{
+		"#format"	"{1:s}"
+		"zho"		"{1} 的冷卻時間已恢復為跟隨全域預設值"
+	}
+
+	"ResetCd Usage"
+	{
+		"zho"		"用法：sm_crosschat_resetcd <玩家>"
+	}
+
+	"ResetCd Done"
+	{
+		"#format"	"{1:s}"
+		"zho"		"已清除 {1} 目前的冷卻等待"
+	}
+
+	"ResetCd Done Self"
+	{
+		"#format"	"{1:s}"
+		"zho"		"[{green}{1}{default}] 你的冷卻等待已被清除，現在可以傳送了"
+	}
+
+	"Status Usage"
+	{
+		"zho"		"用法：sm_crosschat_status <玩家>"
+	}
+
+	"Status Exempt"
+	{
+		"#format"	"{1:s}"
+		"zho"		"{1} 已豁免冷卻"
+	}
+
+	"Status Cooldown"
+	{
+		"#format"	"{1:s},{2:d}"
+		"zho"		"{1} 的冷卻時間為 {2} 秒"
+	}
+
+	"Status Remaining"
+	{
+		"#format"	"{1:d}"
+		"zho"		"目前剩餘等待：{1} 秒"
+	}
+
+	"Enabled Message"
+	{
+		"zho"		"跨伺服器聊天已開啟"
+	}
+
+	"Disabled Message"
+	{
+		"zho"		"跨伺服器聊天已關閉"
+	}
+}

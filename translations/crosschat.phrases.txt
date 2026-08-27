@@ -1,0 +1,165 @@
+"Phrases"
+{
+	"Incoming Message"
+	{
+		"#format"	"{1:s},{2:s},{3:s},{4:s}"
+		"en"		"[{green}{1}{default}] {default}[{lightgreen}{2}{default}] {3}: {4}"
+	}
+
+	"Usage"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] Usage: {green}/crosschat{default} <message> to talk across all servers"
+	}
+
+	"Ready To Send"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] You can send a message now"
+	}
+
+	"Cooldown Remaining"
+	{
+		"#format"	"{1:s},{2:d}"
+		"en"		"[{green}{1}{default}] Please wait {red}{2}{default} second(s) before sending again"
+	}
+
+	"Disabled"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] Cross-server chat is currently disabled"
+	}
+
+	"Not Configured"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] Cross-server chat is not configured on this server"
+	}
+
+	"Gagged"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] You are gagged and cannot use cross-server chat"
+	}
+
+	"No Steam Auth"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] Steam authentication is required before using cross-server chat"
+	}
+
+	"Auth Pending"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] Steam authentication in progress, your message will be sent shortly"
+	}
+
+	"Send Failed"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] Message could not be delivered, please try again later"
+	}
+
+	"Sent"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] Message sent to all servers"
+	}
+
+
+	"Exempt Usage"
+	{
+		"en"		"Usage: sm_crosschat_exempt <player>"
+	}
+
+	"Exempt Enabled"
+	{
+		"#format"	"{1:s}"
+		"en"		"Cooldown exemption enabled for {1}"
+	}
+
+	"Exempt Disabled"
+	{
+		"#format"	"{1:s}"
+		"en"		"Cooldown exemption disabled for {1}"
+	}
+
+	"Exempt Enabled Self"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] An admin enabled cooldown exemption for you"
+	}
+
+	"Exempt Disabled Self"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] An admin disabled your cooldown exemption"
+	}
+
+	"Cd Usage"
+	{
+		"en"		"Usage: sm_crosschat_cd <player> <seconds|-1>"
+	}
+
+	"Cd Set"
+	{
+		"#format"	"{1:s},{2:d}"
+		"en"		"Cooldown for {1} set to {2} second(s)"
+	}
+
+	"Cd Reset Global"
+	{
+		"#format"	"{1:s}"
+		"en"		"Cooldown for {1} now follows the global default"
+	}
+
+	"ResetCd Usage"
+	{
+		"en"		"Usage: sm_crosschat_resetcd <player>"
+	}
+
+	"ResetCd Done"
+	{
+		"#format"	"{1:s}"
+		"en"		"Cleared the current cooldown wait for {1}"
+	}
+
+	"ResetCd Done Self"
+	{
+		"#format"	"{1:s}"
+		"en"		"[{green}{1}{default}] Your cooldown wait was cleared, you can send now"
+	}
+
+	"Status Usage"
+	{
+		"en"		"Usage: sm_crosschat_status <player>"
+	}
+
+	"Status Exempt"
+	{
+		"#format"	"{1:s}"
+		"en"		"{1} is exempt from cooldown"
+	}
+
+	"Status Cooldown"
+	{
+		"#format"	"{1:s},{2:d}"
+		"en"		"{1} has a {2} second cooldown"
+	}
+
+	"Status Remaining"
+	{
+		"#format"	"{1:d}"
+		"en"		"Current wait remaining: {1} second(s)"
+	}
+
+	"Enabled Message"
+	{
+		"en"		"Cross-server chat enabled"
+	}
+
+	"Disabled Message"
+	{
+		"en"		"Cross-server chat disabled"
+	}
+}
