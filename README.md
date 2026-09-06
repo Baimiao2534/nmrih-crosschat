@@ -11,6 +11,7 @@ Normal chat is never touched: players opt in per message via `/crosschat`, so re
 ## Features
 
 - **Command-Based Sending**: players send cross-server messages with `/crosschat <message>` (silent) or `!crosschat <message>`; normal chat is unaffected.
+- **Custom Chat Trigger**: a shorter trigger word can be configured (`sm_crosschat_cmd`, default `cc` for `/cc`), including UTF-8 words such as Chinese or Japanese; set `0` to disable. Works independently of the SourceMod chat trigger core, so it keeps firing even when other chat plugins filter `/`-commands.
 - **Per-Player Cooldown**: global default cooldown, per-player override, and admin exemption — all persisted per SteamID via client cookies.
 - **Admin Flag Bypass**: admins carrying a configurable flag automatically skip the cooldown.
 - **Server Console Broadcast**: the server console can broadcast messages too, with its own enable switch, cooldown and display name. In-game clients and admins can never trigger the console branch.
@@ -102,6 +103,11 @@ sm_crosschat_maxlen "128"
 // Chat prefix (without brackets)
 sm_crosschat_prefix "CrossChat"
 
+// Custom chat trigger word typed as /<word> or !<word> (e.g. /cc <message>).
+// UTF-8 words such as Chinese or Japanese are supported; set 0 to disable.
+// /crosschat always works.
+sm_crosschat_cmd "cc"
+
 // Allow the server console to send cross-server messages
 sm_crosschat_console_enabled "0"
 
@@ -135,6 +141,7 @@ The startup parameter always wins over the config file. UTF-8 IDs such as `-cros
 | Command | Description |
 |---|---|
 | `!crosschat <message>` / `/crosschat <message>` | Send a message to all servers. Without arguments, shows usage and your cooldown status. |
+| `!cc <message>` / `/cc <message>` | Same as above, using the custom trigger word (`sm_crosschat_cmd`). UTF-8 words such as `跨服` work too; the word may be glued directly to the message (`/跨服你好`). Set `sm_crosschat_cmd 0` to disable. |
 
 ### Admins (ADMFLAG_GENERIC)
 

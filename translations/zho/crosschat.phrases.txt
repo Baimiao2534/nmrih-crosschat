@@ -8,8 +8,8 @@
 
 	"Usage"
 	{
-		"#format"	"{1:s}"
-		"zho"		"[{green}{1}{default}] 用法：{green}/crosschat{default} <訊息> 傳送跨伺服器訊息"
+		"#format"	"{1:s},{2:s}"
+		"zho"		"[{green}{1}{default}] 用法：{green}{2} <訊息>{default} 傳送跨伺服器訊息"
 	}
 
 	"Ready To Send"

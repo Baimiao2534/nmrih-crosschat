@@ -8,8 +8,8 @@
 
 	"Usage"
 	{
-		"#format"	"{1:s}"
-		"chi"		"[{green}{1}{default}] 用法：{green}/crosschat{default} <消息> 发送跨服消息"
+		"#format"	"{1:s},{2:s}"
+		"chi"		"[{green}{1}{default}] 用法：{green}{2} <消息>{default} 发送跨服消息"
 	}
 
 	"Ready To Send"

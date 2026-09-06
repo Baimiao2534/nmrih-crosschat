@@ -8,8 +8,8 @@
 
 	"Usage"
 	{
-		"#format"	"{1:s}"
-		"en"		"[{green}{1}{default}] Usage: {green}/crosschat{default} <message> to talk across all servers"
+		"#format"	"{1:s},{2:s}"
+		"en"		"[{green}{1}{default}] Usage: {green}{2} <message>{default} to talk across all servers"
 	}
 
 	"Ready To Send"

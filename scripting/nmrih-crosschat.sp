@@ -13,12 +13,13 @@
 #include <sourcecomms>
 #define REQUIRE_PLUGIN
 
-#define PLUGIN_VERSION "1.0.1"
+#define PLUGIN_VERSION "1.0.2"
 #define PLUGIN_DESCRIPTION "Cross-server chat via command with per-player cooldown"
 
 #define MAX_MSG_BUFFER 512
 #define MAX_NAME_BUFFER 64
 #define MAX_SID_BUFFER 32
+#define MAX_CMD_BUFFER 32
 
 public Plugin myinfo =
 {
@@ -38,6 +39,7 @@ ConVar cvAdminFlag;
 ConVar cvFetchInterval;
 ConVar cvMaxLen;
 ConVar cvPrefix;
+ConVar cvChatCmd;
 ConVar cvConsoleEnabled;
 ConVar cvConsoleCooldown;
 ConVar cvConsoleName;
@@ -82,6 +84,7 @@ public void OnPluginStart()
 	cvFetchInterval= CreateConVar("sm_crosschat_fetchinterval", "2.0", "Seconds between relay polls", _, true, 1.0, true, 60.0);
 	cvMaxLen       = CreateConVar("sm_crosschat_maxlen", "128", "Maximum message length in characters", _, true, 16.0, true, 512.0);
 	cvPrefix       = CreateConVar("sm_crosschat_prefix", "CrossChat", "Chat prefix (without brackets)");
+	cvChatCmd      = CreateConVar("sm_crosschat_cmd", "cc", "Custom chat trigger word typed as /<word> or !<word> (e.g. /cc <message>). UTF-8 words supported. Set 0 to disable; /crosschat always works");
 	cvConsoleEnabled = CreateConVar("sm_crosschat_console_enabled", "0", "Allow the server console to send cross-server messages", _, true, 0.0, true, 1.0);
 	cvConsoleCooldown = CreateConVar("sm_crosschat_console_cooldown", "0", "Server console send cooldown in seconds, 0 = no cooldown", _, true, 0.0);
 	cvConsoleName  = CreateConVar("sm_crosschat_console_name", "Console", "Display name for server console messages");
@@ -229,6 +232,7 @@ void MigrateConfig()
 		"sm_crosschat_enabled", "sm_crosschat_url",
 		"sm_crosschat_token", "sm_crosschat_cooldown", "sm_crosschat_adminflag",
 		"sm_crosschat_fetchinterval", "sm_crosschat_maxlen", "sm_crosschat_prefix",
+		"sm_crosschat_cmd",
 		"sm_crosschat_console_enabled", "sm_crosschat_console_cooldown",
 		"sm_crosschat_console_name", "sm_crosschat_require_auth",
 	};
@@ -426,6 +430,19 @@ public Action Cmd_CrossChat(int client, int args)
 		return ConsoleSend(args);
 	}
 
+	char message[MAX_MSG_BUFFER];
+	GetCmdArgString(message, sizeof(message));
+	StripCmdQuotes(message);
+
+	return PlayerSendCommand(client, message);
+}
+
+/**
+ * Shared player send path used by the sm_crosschat command and the chat
+ * triggers. An empty message shows usage plus the personal cooldown status.
+ */
+Action PlayerSendCommand(int client, const char[] message)
+{
 	char prefix[64];
 	cvPrefix.GetString(prefix, sizeof(prefix));
 
@@ -435,10 +452,12 @@ public Action Cmd_CrossChat(int client, int args)
 		return Plugin_Handled;
 	}
 
-	// Show usage and personal cooldown status when called without arguments
-	if (args < 1)
+	// Show usage and personal cooldown status when called without a message
+	if (message[0] == '\0')
 	{
-		CReplyToCommand(client, "%t", "Usage", prefix);
+		char trigger[MAX_CMD_BUFFER + 2];
+		GetPlayerTrigger(trigger, sizeof(trigger));
+		CReplyToCommand(client, "%t", "Usage", prefix, trigger);
 		int remaining = GetRemainingCooldown(client);
 		if (remaining > 0)
 		{
@@ -471,8 +490,7 @@ public Action Cmd_CrossChat(int client, int args)
 	{
 		// Steam auth still pending: queue the message instead of rejecting it,
 		// then retry from OnClientAuthorized
-		GetCmdArgString(gS_PendingMsg[client], sizeof(gS_PendingMsg[]));
-		StripCmdQuotes(gS_PendingMsg[client]);
+		strcopy(gS_PendingMsg[client], sizeof(gS_PendingMsg[]), message);
 		gB_HasPending[client] = true;
 		CReplyToCommand(client, "%t", "Auth Pending", prefix);
 		return Plugin_Handled;
@@ -486,13 +504,127 @@ public Action Cmd_CrossChat(int client, int args)
 		return Plugin_Handled;
 	}
 
-	char message[MAX_MSG_BUFFER];
-	GetCmdArgString(message, sizeof(message));
-	StripCmdQuotes(message);
-
 	SendPlayerMessage(client, message);
 
 	return Plugin_Handled;
+}
+
+// ===== Chat triggers =====
+
+/**
+ * Chat line entry point for /<word> and !<word> triggers. Runs independently
+ * of the SourceMod chat trigger core, so the custom trigger word (UTF-8 words
+ * such as Chinese or Japanese included) and the built-in crosschat fallback
+ * keep working even where core triggers are bypassed by other chat plugins.
+ */
+public Action OnClientSayCommand(int client, const char[] command, const char[] sArgs)
+{
+	if (client <= 0 || !IsClientInGame(client) || IsChatTrigger())
+	{
+		return Plugin_Continue;
+	}
+
+	if (sArgs[0] != '/' && sArgs[0] != '!')
+	{
+		return Plugin_Continue;
+	}
+
+	char cmd[MAX_CMD_BUFFER];
+	char message[MAX_MSG_BUFFER];
+
+	// Custom trigger word from sm_crosschat_cmd
+	if (GetChatCmd(cmd, sizeof(cmd)))
+	{
+		int offset = TriggerMessageOffset(sArgs, cmd);
+		if (offset != -1)
+		{
+			strcopy(message, sizeof(message), sArgs[offset]);
+			TrimString(message);
+			PlayerSendCommand(client, message);
+			return Plugin_Handled;
+		}
+	}
+
+	// Built-in fallback for /crosschat and !crosschat when the core trigger
+	// did not pick them up
+	int offset = TriggerMessageOffset(sArgs, "crosschat");
+	if (offset != -1)
+	{
+		strcopy(message, sizeof(message), sArgs[offset]);
+		TrimString(message);
+		PlayerSendCommand(client, message);
+		return Plugin_Handled;
+	}
+
+	return Plugin_Continue;
+}
+
+/**
+ * Reads the custom trigger word, false when disabled ("0" or empty).
+ */
+bool GetChatCmd(char[] cmd, int maxlen)
+{
+	cvChatCmd.GetString(cmd, maxlen);
+	TrimString(cmd);
+	return !(cmd[0] == '\0' || StrEqual(cmd, "0"));
+}
+
+/**
+ * Resolves the trigger shown in usage replies: the custom word when enabled,
+ * /crosschat otherwise.
+ */
+void GetPlayerTrigger(char[] trigger, int maxlen)
+{
+	char cmd[MAX_CMD_BUFFER];
+	if (GetChatCmd(cmd, sizeof(cmd)))
+	{
+		FormatEx(trigger, maxlen, "/%s", cmd);
+	}
+	else
+	{
+		strcopy(trigger, maxlen, "/crosschat");
+	}
+}
+
+/**
+ * Checks whether chat text starts with "/<word>" or "!<word>" (caller has
+ * verified the trigger character) and returns the byte offset where the
+ * message begins:
+ *   - "/cc hello": message starts after the separating space
+ *   - "/跨服你好": message starts right after the word, so CJK players can
+ *     type the trigger and message without any space
+ *   - "/ccfoo": an ASCII letter glued to the word belongs to a different
+ *     command and does not match
+ * Returns -1 when the text does not start with the given word.
+ */
+int TriggerMessageOffset(const char[] text, const char[] word)
+{
+	int wl = strlen(word);
+	if (wl == 0)
+	{
+		return -1;
+	}
+
+	// The word must appear right after the '/' or '!' character
+	if (strncmp(text[1], word, wl) != 0)
+	{
+		return -1;
+	}
+
+	int next = 1 + wl;
+	if (text[next] == '\0')
+	{
+		return next;  // trigger without a message, usage reply follows
+	}
+	if (text[next] == ' ')
+	{
+		return next + 1;
+	}
+	if ((text[next] & 0x80) != 0)
+	{
+		return next;  // multi-byte UTF-8 message glued to the word
+	}
+	return -1;
 }
 
 /**
