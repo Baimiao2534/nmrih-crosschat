@@ -13,7 +13,7 @@
 #include <sourcecomms>
 #define REQUIRE_PLUGIN
 
-#define PLUGIN_VERSION "1.0.2"
+#define PLUGIN_VERSION "1.0.2.1"
 #define PLUGIN_DESCRIPTION "Cross-server chat via command with per-player cooldown"
 
 #define MAX_MSG_BUFFER 512
@@ -440,6 +440,12 @@ public Action Cmd_CrossChat(int client, int args)
 /**
  * Shared player send path used by the sm_crosschat command and the chat
  * triggers. An empty message shows usage plus the personal cooldown status.
+ *
+ * Replies use CPrintToChat rather than CReplyToCommand: the latter follows the
+ * current command's reply source, which does not resolve to chat on every
+ * invocation path (chat triggers and commands typed in the client console
+ * included), so the prompt could be printed to the console instead of showing
+ * up in the player's chat box.
  */
 Action PlayerSendCommand(int client, const char[] message)
 {
@@ -448,7 +454,7 @@ Action PlayerSendCommand(int client, const char[] message)
 
 	if (!cvEnabled.BoolValue)
 	{
-		CReplyToCommand(client, "%t", "Disabled", prefix);
+		CPrintToChat(client, "%t", "Disabled", prefix);
 		return Plugin_Handled;
 	}
 
@@ -457,15 +463,15 @@ Action PlayerSendCommand(int client, const char[] message)
 	{
 		char trigger[MAX_CMD_BUFFER + 2];
 		GetPlayerTrigger(trigger, sizeof(trigger));
-		CReplyToCommand(client, "%t", "Usage", prefix, trigger);
+		CPrintToChat(client, "%t", "Usage", prefix, trigger);
 		int remaining = GetRemainingCooldown(client);
 		if (remaining > 0)
 		{
-			CReplyToCommand(client, "%t", "Cooldown Remaining", prefix, remaining);
+			CPrintToChat(client, "%t", "Cooldown Remaining", prefix, remaining);
 		}
 		else
 		{
-			CReplyToCommand(client, "%t", "Ready To Send", prefix);
+			CPrintToChat(client, "%t", "Ready To Send", prefix);
 		}
 		return Plugin_Handled;
 	}
@@ -474,14 +480,14 @@ Action PlayerSendCommand(int client, const char[] message)
 	cvUrl.GetString(url, sizeof(url));
 	if (url[0] == '\0')
 	{
-		CReplyToCommand(client, "%t", "Not Configured", prefix);
+		CPrintToChat(client, "%t", "Not Configured", prefix);
 		return Plugin_Handled;
 	}
 
 	// Blocked players are not allowed to relay messages
 	if (IsGagged(client))
 	{
-		CReplyToCommand(client, "%t", "Gagged", prefix);
+		CPrintToChat(client, "%t", "Gagged", prefix);
 		return Plugin_Handled;
 	}
 
@@ -492,7 +498,7 @@ Action PlayerSendCommand(int client, const char[] message)
 		// then retry from OnClientAuthorized
 		strcopy(gS_PendingMsg[client], sizeof(gS_PendingMsg[]), message);
 		gB_HasPending[client] = true;
-		CReplyToCommand(client, "%t", "Auth Pending", prefix);
+		CPrintToChat(client, "%t", "Auth Pending", prefix);
 		return Plugin_Handled;
 	}
 
@@ -500,7 +506,7 @@ Action PlayerSendCommand(int client, const char[] message)
 	int remaining = GetRemainingCooldown(client);
 	if (remaining > 0)
 	{
-		CReplyToCommand(client, "%t", "Cooldown Remaining", prefix, remaining);
+		CPrintToChat(client, "%t", "Cooldown Remaining", prefix, remaining);
 		return Plugin_Handled;
 	}
 
@@ -690,10 +696,6 @@ void SendPlayerMessage(int client, const char[] message)
 	// Same format as remote servers receive.
 	BroadcastIncoming(sid, name, msgBuf);
 
-	// Log the outgoing message like a regular say line; delivery failures
-	// are logged separately in the response callback
-	LogToGame("[CrossChat] [%s] %s: %s", sid, name, msgBuf);
-
 	HTTPRequest request = new HTTPRequest(url);
 	request.Timeout = 10;
 	request.AppendFormParam("action", "send");
@@ -803,9 +805,6 @@ Action ConsoleSend(int args)
 
 	// Echo to the local server immediately, same as the player branch
 	BroadcastIncoming(sid, name, message);
-
-	// Log the outgoing console message like a regular say line
-	LogToGame("[CrossChat] [%s] %s: %s", sid, name, message);
 
 	HTTPRequest request = new HTTPRequest(url);
 	request.Timeout = 10;
